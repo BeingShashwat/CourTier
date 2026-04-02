@@ -2,5 +2,19 @@ spring:
   application:
     name: courtier-backend
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/courtier
+    username: ${DB_USERNAME:courtier}
+    password: ${DB_PASSWORD:courtier}
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
 server:
   port: 8080
