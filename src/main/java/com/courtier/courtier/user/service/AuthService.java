@@ -1,5 +1,6 @@
 package com.courtier.courtier.user.service;
 
+import com.courtier.courtier.common.exception.CourtierException;
 import com.courtier.courtier.common.security.JwtService;
 import com.courtier.courtier.user.dto.AuthResponse;
 import com.courtier.courtier.user.dto.LoginRequest;
@@ -27,10 +28,10 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already in use");
+            throw new CourtierException.Conflict("Email already in use");
         }
         if (request.phone() != null && userRepository.existsByPhone(request.phone())) {
-            throw new IllegalArgumentException("Phone already in use");
+            throw new CourtierException.Conflict("Phone already in use");
         }
 
         User user = User.builder()
@@ -52,7 +53,7 @@ public class AuthService {
         );
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.email()));
+                .orElseThrow(() -> new CourtierException.NotFound("User not found: " + request.email()));
 
         log.info("User logged in: {}", user.getEmail());
         return buildAuthResponse(user);
