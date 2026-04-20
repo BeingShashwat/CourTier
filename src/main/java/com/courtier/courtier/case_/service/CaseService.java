@@ -52,7 +52,8 @@ public class CaseService {
         userCaseRepository.save(userCase);
 
         log.info("User {} started tracking case {}", userEmail, request.cnrNumber());
-        return CaseResponse.from(courtCase);
+        long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
+        return CaseResponse.from(courtCase, trackerCount);
     }
 
     @Transactional(readOnly = true)
@@ -61,7 +62,10 @@ public class CaseService {
                 .orElseThrow(() -> new CourtierException.NotFound("User not found"));
 
         return caseRepository.findAllByUserId(user.getId()).stream()
-                .map(CaseResponse::from)
+                .map(c -> {
+                    long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(c.getId());
+                    return CaseResponse.from(c, trackerCount);
+                })
                 .toList();
     }
 
@@ -77,7 +81,8 @@ public class CaseService {
             throw new CourtierException.Forbidden("You are not tracking this case");
         }
 
-        return CaseResponse.from(courtCase);
+        long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
+        return CaseResponse.from(courtCase, trackerCount);
     }
 
     @Transactional

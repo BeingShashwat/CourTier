@@ -23,7 +23,8 @@ public record CaseResponse(
         String caseStage,
         LocalDateTime lastPolledAt,
         List<HearingHistoryDto> hearingHistory,
-        List<CaseActDto> acts
+        List<CaseActDto> acts,
+        long trackerCount
 ) {
     public record HearingHistoryDto(
             LocalDate hearingDate,
@@ -38,7 +39,7 @@ public record CaseResponse(
     ) {
     }
 
-    public static CaseResponse from(Case c) {
+    public static CaseResponse from(Case c, long trackerCount) {
         return new CaseResponse(
                 c.getId(),
                 c.getCnrNumber(),
@@ -60,7 +61,8 @@ public record CaseResponse(
                         .toList(),
                 c.getActs().stream()
                         .map(a -> new CaseActDto(a.getActName(), a.getSection()))
-                        .toList()
+                        .toList(),
+                trackerCount
         );
     }
 }

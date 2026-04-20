@@ -10,4 +10,6 @@ public interface UserCaseRepository extends JpaRepository<UserCase, Long> {
     boolean existsByUserIdAndCourtCaseId(Long userId, Long caseId);
 
     Optional<UserCase> findByUserIdAndCourtCaseId(Long userId, Long caseId);
+
+    long countByCourtCaseIdAndActiveTrue(Long caseId);
 }
