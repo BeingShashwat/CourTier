@@ -21,6 +21,8 @@ import java.util.List;
 @Slf4j
 public class CaseService {
 
+    private static final int MAX_TRACKERS_PER_CASE = 5;
+
     private final CaseRepository caseRepository;
     private final UserCaseRepository userCaseRepository;
     private final UserRepository userRepository;
@@ -42,6 +44,13 @@ public class CaseService {
             log.info("New case stub created for CNR: {}", request.cnrNumber());
         } else if (userCaseRepository.existsByUserIdAndCourtCaseId(user.getId(), courtCase.getId())) {
             throw new CourtierException.Conflict("You are already tracking this case");
+        } else {
+            long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
+            if (trackerCount >= MAX_TRACKERS_PER_CASE) {
+                throw new CourtierException.Conflict(
+                        "This case has reached the maximum tracker limit of " + MAX_TRACKERS_PER_CASE
+                );
+            }
         }
 
         UserCase userCase = UserCase.builder()
