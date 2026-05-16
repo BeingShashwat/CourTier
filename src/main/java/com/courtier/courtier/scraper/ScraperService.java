@@ -30,7 +30,8 @@ public class ScraperService {
             Document doc = ecourtsClient.fetchCaseBycnr(cnrNumber);
 
             if (!caseHtmlParser.isValidCaseDocument(doc)) {
-                log.warn("Invalid or unrecognized response for CNR: {}", cnrNumber);
+                log.warn("Invalid or unrecognized response for CNR: {}. " +
+                        "Captcha may have failed.", cnrNumber);
                 return false;
             }
 
@@ -41,7 +42,7 @@ public class ScraperService {
             log.info("Successfully scraped and updated CNR: {}", cnrNumber);
             return true;
         } catch (Exception e) {
-            log.error("Scraping failed for CNR: {}", cnrNumber, e);
+            log.error("Scraping failed for CNR: {} — {}", cnrNumber, e.getMessage(), e);
             return false;
         }
     }
