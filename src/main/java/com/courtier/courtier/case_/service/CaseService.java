@@ -105,7 +105,8 @@ public class CaseService {
         UserCase userCase = userCaseRepository.findByUserIdAndCourtCaseId(user.getId(), courtCase.getId())
                 .orElseThrow(() -> new CourtierException.NotFound("You are not tracking this case"));
 
-        userCaseRepository.delete(userCase);
-        log.info("User {} removed case {}", userEmail, cnrNumber);
+        userCase.setActive(false);
+        userCaseRepository.save(userCase);
+        log.info("User {} stopped tracking case {}", userEmail, cnrNumber);
     }
 }
