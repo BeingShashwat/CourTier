@@ -4,6 +4,7 @@ import com.courtier.courtier.case_.dto.AddCaseRequest;
 import com.courtier.courtier.case_.dto.CaseResponse;
 import com.courtier.courtier.case_.service.CaseService;
 import com.courtier.courtier.common.exception.ApiResponse;
+import com.courtier.courtier.scraper.ScraperService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 public class CaseController {
 
     private final CaseService caseService;
+    private final ScraperService scraperService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<CaseResponse>> addCase(
@@ -49,6 +51,20 @@ public class CaseController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String cnrNumber) {
         caseService.removeCase(userDetails.getUsername(), cnrNumber);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/{cnrNumber}/poll")
+    public ResponseEntity<ApiResponse<Void>> pollNow(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String cnrNumber) {
+        caseService.getCase(userDetails.getUsername(), cnrNumber);
+
+        boolean success = scraperService.scrapeAndUpdate(cnrNumber);
+        if (!success) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(ApiResponse.fail("Scraping failed — captcha or eCourts unavailable"));
+        }
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
