@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ public class EcourtsClient {
     private final CaptchaSolver captchaSolver;
 
     public Document fetchCaseBycnr(String cnrNumber) throws Exception {
+        // Step 1 — establish session and get cookies
         Map<String, String> cookies = new HashMap<>();
 
         Connection.Response sessionResp = Jsoup.connect(BASE_URL)
@@ -38,20 +40,23 @@ public class EcourtsClient {
         cookies.putAll(sessionResp.cookies());
         log.debug("Session established, cookies: {}", cookies.keySet());
 
+        // Step 2 — fetch captcha image using same session cookies
         Connection.Response captchaResp = Jsoup.connect(CAPTCHA_URL)
                 .userAgent(USER_AGENT)
                 .timeout(TIMEOUT_MS)
                 .cookies(cookies)
-                .ignoreContentType(true)
+                .ignoreContentType(true)   // response is image/png, not HTML
                 .method(Connection.Method.GET)
                 .execute();
 
         cookies.putAll(captchaResp.cookies());
 
+        // Step 3 — solve captcha
         byte[] captchaBytes = captchaResp.bodyAsBytes();
         String captchaSolution = captchaSolver.solve(new ByteArrayInputStream(captchaBytes));
         log.debug("Captcha solved: '{}'", captchaSolution);
 
+        // Step 4 — submit CNR + captcha
         Connection.Response caseResp = Jsoup.connect(CASE_URL)
                 .userAgent(USER_AGENT)
                 .timeout(TIMEOUT_MS)

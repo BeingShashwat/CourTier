@@ -54,10 +54,13 @@ public class CaseController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
+
     @PostMapping("/{cnrNumber}/poll")
     public ResponseEntity<ApiResponse<Void>> pollNow(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String cnrNumber) {
+
+        // verify user is tracking this case before allowing manual poll
         caseService.getCase(userDetails.getUsername(), cnrNumber);
 
         boolean success = scraperService.scrapeAndUpdate(cnrNumber);

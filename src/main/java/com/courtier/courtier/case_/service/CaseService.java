@@ -32,25 +32,28 @@ public class CaseService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new CourtierException.NotFound("User not found"));
 
+        // if CNR already exists in DB, just link the user to it
         Case courtCase = caseRepository.findByCnrNumber(request.cnrNumber())
                 .orElse(null);
 
-        if (courtCase == null) {
+        if (courtCase != null) {
+            // check if user already tracking this case
+            if (userCaseRepository.existsByUserIdAndCourtCaseId(user.getId(), courtCase.getId())) {
+                throw new CourtierException.Conflict("You are already tracking this case");
+            }
+            // enforce 5-user cap
+            long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
+            if (trackerCount >= MAX_TRACKERS_PER_CASE) {
+                throw new CourtierException.Conflict("This case has reached the maximum tracker limit of " + MAX_TRACKERS_PER_CASE);
+            }
+        } else {
+            // CNR doesn't exist — create a stub, scraper will fill it later
             courtCase = Case.builder()
                     .cnrNumber(request.cnrNumber())
                     .status(Case.CaseStatus.UNKNOWN)
                     .build();
             courtCase = caseRepository.save(courtCase);
             log.info("New case stub created for CNR: {}", request.cnrNumber());
-        } else if (userCaseRepository.existsByUserIdAndCourtCaseId(user.getId(), courtCase.getId())) {
-            throw new CourtierException.Conflict("You are already tracking this case");
-        } else {
-            long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
-            if (trackerCount >= MAX_TRACKERS_PER_CASE) {
-                throw new CourtierException.Conflict(
-                        "This case has reached the maximum tracker limit of " + MAX_TRACKERS_PER_CASE
-                );
-            }
         }
 
         UserCase userCase = UserCase.builder()
@@ -61,6 +64,7 @@ public class CaseService {
         userCaseRepository.save(userCase);
 
         log.info("User {} started tracking case {}", userEmail, request.cnrNumber());
+
         long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
         return CaseResponse.from(courtCase, trackerCount);
     }
@@ -72,8 +76,8 @@ public class CaseService {
 
         return caseRepository.findAllByUserId(user.getId()).stream()
                 .map(c -> {
-                    long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(c.getId());
-                    return CaseResponse.from(c, trackerCount);
+                    long count = userCaseRepository.countByCourtCaseIdAndActiveTrue(c.getId());
+                    return CaseResponse.from(c, count);
                 })
                 .toList();
     }
@@ -86,6 +90,7 @@ public class CaseService {
         Case courtCase = caseRepository.findByCnrNumber(cnrNumber)
                 .orElseThrow(() -> new CourtierException.NotFound("Case not found: " + cnrNumber));
 
+        // verify this user is actually tracking this case
         if (!userCaseRepository.existsByUserIdAndCourtCaseId(user.getId(), courtCase.getId())) {
             throw new CourtierException.Forbidden("You are not tracking this case");
         }
@@ -105,8 +110,10 @@ public class CaseService {
         UserCase userCase = userCaseRepository.findByUserIdAndCourtCaseId(user.getId(), courtCase.getId())
                 .orElseThrow(() -> new CourtierException.NotFound("You are not tracking this case"));
 
+        // soft delete — set active = false, don't actually delete the row
         userCase.setActive(false);
         userCaseRepository.save(userCase);
+
         log.info("User {} stopped tracking case {}", userEmail, cnrNumber);
     }
 }

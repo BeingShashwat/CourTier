@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Component
+
 public class CaptchaSolver {
     private final Tesseract tesseract;
 
@@ -22,9 +23,10 @@ public class CaptchaSolver {
         tesseract.setOcrEngineMode(1);
     }
 
-    public String solve(InputStream captchaImageStream) throws IOException, TesseractException {
+    public String solve(InputStream captchaImageStream) throws IOException, TesseractException{
         BufferedImage image = ImageIO.read(captchaImageStream);
         String result = tesseract.doOCR(image);
+
         return result.replaceAll("\\s+", "").trim();
     }
 }

@@ -21,8 +21,11 @@ public class ScraperService {
 
     @Transactional
     public boolean scrapeAndUpdate(String cnrNumber) {
-        Case courtCase = caseRepository.findByCnrNumber(cnrNumber).orElse(null);
+        Case courtCase = caseRepository.findByCnrNumber(cnrNumber)
+                .orElse(null);
+
         if (courtCase == null) {
+            log.warn("Scrape requested for unknown CNR: {}", cnrNumber);
             return false;
         }
 
@@ -41,6 +44,7 @@ public class ScraperService {
 
             log.info("Successfully scraped and updated CNR: {}", cnrNumber);
             return true;
+
         } catch (Exception e) {
             log.error("Scraping failed for CNR: {} — {}", cnrNumber, e.getMessage(), e);
             return false;

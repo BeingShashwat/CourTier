@@ -10,6 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class CaseAct {
 
     @Id
@@ -22,4 +23,5 @@ public class CaseAct {
 
     private String actName;
     private String section;
+
 }

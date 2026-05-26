@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class UserCase {
 
     @Id
@@ -34,4 +35,5 @@ public class UserCase {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime addedAt;
+
 }

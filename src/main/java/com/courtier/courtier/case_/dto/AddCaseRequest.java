@@ -8,8 +8,9 @@ public record AddCaseRequest(
         @NotBlank(message = "CNR number is required")
         @Pattern(
                 regexp = "[A-Z]{4}[0-9]{12}$",
-                message = "Invalid CNR format. Expected: 4 letters + 12 digits"
+                message = "Invalid CNR format.Expected: 4 letters + 12 digits (eg. DLHC100012320244)"
         )
+
         String cnrNumber
-) {
-}
+){}
+

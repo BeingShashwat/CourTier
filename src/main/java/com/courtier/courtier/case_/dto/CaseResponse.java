@@ -30,14 +30,12 @@ public record CaseResponse(
             LocalDate hearingDate,
             String purpose,
             String judgeName
-    ) {
-    }
+    ) {}
 
     public record CaseActDto(
             String actName,
             String section
-    ) {
-    }
+    ) {}
 
     public static CaseResponse from(Case c, long trackerCount) {
         return new CaseResponse(

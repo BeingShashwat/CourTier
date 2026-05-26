@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler {
 
+public class GlobalExceptionHandler {
     @ExceptionHandler(CourtierException.class)
     public ResponseEntity<ApiResponse<Void>> handle(CourtierException ex) {
         log.warn("Domain exception [{}] : {}", ex.status(), ex.getMessage());
