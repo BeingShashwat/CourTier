@@ -1,26 +1,71 @@
 spring:
+  profiles:
+    active: dev
+
   application:
     name: courtier-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/courtier
-    username: ${DB_USERNAME:courtier}
-    password: ${DB_PASSWORD:courtier}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: courtier-notifications
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.courtier.courtier.*"
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 1
+
+    scheduling:
+      enabled: true
 
   jpa:
-    hibernate:
-      ddl-auto: create
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
     open-in-view: false
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 courtier:
   jwt:
-    secret: TWF5YmVTb21lZGF5RXZlcnl0aGluZ1dpbGxCZUZpbmU=
-    access-token-expiry-ms: 3600000
-    refresh-token-expiry-ms: 604800000
+    secret: ${JWT_SECRET}
+    access-token-expiry-ms: ${JWT_ACCESS_EXPIRY:3600000}
+    refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY:604800000}
+  email:
+    provider: smtp
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
