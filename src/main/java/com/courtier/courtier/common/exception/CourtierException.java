@@ -35,4 +35,9 @@ public abstract class CourtierException extends RuntimeException {
         public Forbidden(String message) { super(message); }
         @Override public HttpStatus status() { return HttpStatus.FORBIDDEN; }
     }
+
+    public static class TooManyRequests extends CourtierException {
+        public TooManyRequests(String message) { super(message); }
+        @Override public HttpStatus status() { return HttpStatus.TOO_MANY_REQUESTS; }
+    }
 }
