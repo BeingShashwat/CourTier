@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,9 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Case {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,17 +24,24 @@ public class Case {
     @Column(nullable = false, unique = true)
     private String cnrNumber;
 
+    @Column(columnDefinition = "TEXT")
     private String caseType;
     private String filingNumber;
     private LocalDate filingDate;
     private String registrationNumber;
     private LocalDate registrationDate;
 
+    @Column(columnDefinition = "TEXT")
     private String courtName;
     private String courtNumber;
+
+    @Column(columnDefinition = "TEXT")
     private String judgeName;
 
+    @Column(columnDefinition = "TEXT")
     private String petitionerName;
+
+    @Column(columnDefinition = "TEXT")
     private String respondentName;
 
     @Enumerated(EnumType.STRING)
@@ -46,9 +50,20 @@ public class Case {
 
     private LocalDate nextHearingDate;
     private LocalDate lastHearingDate;
-    private String caseStage;
 
+    @Column(columnDefinition = "TEXT")
+    private String caseStage;
     private LocalDateTime lastPolledAt;
+
+    // --- Stateless Polling Metadata Fields ---
+    private String stateCode;
+    private String distCode;
+    private String courtCode;
+    private String nationalCourtCode;
+    private String courtNo;
+    private String caseNumber1;
+    private String businessDate;
+    private String srNo;
 
     @CreationTimestamp
     @Column(updatable = false)
