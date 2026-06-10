@@ -12,7 +12,6 @@ import com.courtier.courtier.common.config.KafkaConfig;
 import com.courtier.courtier.common.exception.CourtierException;
 import com.courtier.courtier.polling.CaseUpdatedEvent;
 import com.courtier.courtier.polling.DiffDetector;
-import com.courtier.courtier.scraper.CaptchaResponse;
 import com.courtier.courtier.scraper.ScraperRouter;
 import com.courtier.courtier.user.entity.User;
 import com.courtier.courtier.user.repository.UserRepository;
@@ -131,6 +130,7 @@ public class CaseService {
 
     @Transactional(readOnly = true)
     public CaseResponse getCase(String userEmail, String cnrNumber) {
+        log.warn("GET CASE called by {} for cnr={}", userEmail, cnrNumber);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new CourtierException.NotFound("User not found"));
 

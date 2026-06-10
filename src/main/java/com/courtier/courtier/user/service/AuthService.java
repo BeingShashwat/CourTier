@@ -25,12 +25,33 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService; // <-- Inject OtpService
+    private final UserService userService;
 
     @Transactional
     public String register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new CourtierException.Conflict("Email already registered");
+        User existing = userRepository.findByEmail(request.email()).orElse(null);
+
+        if (existing != null) {
+            if (existing.isEnabled()) {
+                throw new CourtierException.Conflict("Email already registered");
+            }
+
+            if (request.phone() != null
+                    && !request.phone().equals(existing.getPhone())
+                    && userRepository.existsByPhoneAndIdNot(request.phone(), existing.getId())) {
+                throw new CourtierException.Conflict("Phone already registered");
+            }
+
+            existing.setFullName(request.fullName());
+            existing.setPassword(passwordEncoder.encode(request.password()));
+            existing.setPhone(request.phone());
+            userRepository.save(existing);
+
+            otpService.generateAndSendOtp(existing.getEmail(), OtpToken.OtpPurpose.REGISTRATION);
+            log.info("Registration resumed for {}, OTP resent.", existing.getEmail());
+            return "Account exists but email is not verified. A new OTP has been sent.";
         }
+
         if (request.phone() != null && userRepository.existsByPhone(request.phone())) {
             throw new CourtierException.Conflict("Phone already registered");
         }
@@ -41,7 +62,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.password()))
                 .phone(request.phone())
                 .role(User.Role.USER)
-                .enabled(false) // <-- Account starts disabled
+                .enabled(false)
                 .build();
 
         userRepository.save(user);
@@ -59,8 +80,10 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new CourtierException.NotFound("User not found"));
 
-        user.setEnabled(true); // <-- Enable account
+        user.setEnabled(true);
         userRepository.save(user);
+
+        userService.evictUserCache(user.getEmail());
 
         log.info("User {} successfully verified email.", user.getEmail());
 
@@ -91,9 +114,13 @@ public class AuthService {
 
     @Transactional
     public String forgotPassword(String email) {
-        if (!userRepository.existsByEmail(email)) {
-            throw new CourtierException.NotFound("User not found");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CourtierException.NotFound("User not found"));
+
+        if (!user.isEnabled()) {
+            throw new CourtierException.Forbidden("Account not verified. Please verify your email first.");
         }
+
         otpService.generateAndSendOtp(email, OtpToken.OtpPurpose.PASSWORD_RESET);
         log.info("Password reset OTP requested for {}", email);
         return "Password reset OTP sent to your email.";
@@ -106,8 +133,14 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new CourtierException.NotFound("User not found"));
 
+        if (!user.isEnabled()) {
+            throw new CourtierException.Forbidden("Account not verified. Please verify your email first.");
+        }
+
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+
+        userService.evictUserCache(user.getEmail());
 
         log.info("Password successfully reset for {}", user.getEmail());
         return "Password successfully reset. You can now login.";

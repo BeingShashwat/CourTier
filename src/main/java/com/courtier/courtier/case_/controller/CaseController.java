@@ -6,7 +6,6 @@ import com.courtier.courtier.case_.service.CaseService;
 import com.courtier.courtier.common.config.RateLimitConfig;
 import com.courtier.courtier.common.config.RateLimitService;
 import com.courtier.courtier.common.exception.ApiResponse;
-import com.courtier.courtier.scraper.CaptchaResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

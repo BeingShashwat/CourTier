@@ -154,6 +154,14 @@
             <artifactId>bucket4j_jdk17-lettuce</artifactId>
             <version>8.14.0</version>
         </dependency>
+
+
+        <!-- For loading env file every time spring starts -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
