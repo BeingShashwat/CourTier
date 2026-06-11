@@ -3,11 +3,7 @@ package com.courtier.courtier.user.controller;
 import com.courtier.courtier.common.config.RateLimitConfig;
 import com.courtier.courtier.common.config.RateLimitService;
 import com.courtier.courtier.common.exception.ApiResponse;
-import com.courtier.courtier.user.dto.AuthResponse;
-import com.courtier.courtier.user.dto.LoginRequest;
-import com.courtier.courtier.user.dto.RegisterRequest;
-import com.courtier.courtier.user.dto.ResetPasswordRequest;
-import com.courtier.courtier.user.dto.VerifyOtpRequest;
+import com.courtier.courtier.user.dto.*;
 import com.courtier.courtier.user.service.AuthService;
 import com.courtier.courtier.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -94,5 +90,14 @@ public class AuthController {
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        AuthResponse response = authService.refreshToken(request);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

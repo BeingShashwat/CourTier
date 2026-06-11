@@ -145,4 +145,36 @@ public class AuthService {
         log.info("Password successfully reset for {}", user.getEmail());
         return "Password successfully reset. You can now login.";
     }
+
+    @Transactional
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+
+        String refreshToken = request.refreshToken();
+
+        if (!jwtService.isValid(refreshToken)) {
+            throw new CourtierException.Unauthorized("Invalid refresh token");
+        }
+
+        String email = jwtService.extractEmail(refreshToken);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CourtierException.NotFound("User not found"));
+
+        if (!user.isEnabled()) {
+            throw new CourtierException.Forbidden("Account not verified");
+        }
+
+        String newAccessToken =
+                jwtService.generateAccessToken(user.getEmail());
+
+        String newRefreshToken =
+                jwtService.generateRefreshToken(user.getEmail());
+
+        return new AuthResponse(
+                newAccessToken,
+                newRefreshToken,
+                user.getEmail(),
+                user.getFullName()
+        );
+    }
 }
