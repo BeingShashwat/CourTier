@@ -8,8 +8,9 @@ import com.courtier.courtier.case_.entity.HearingHistory;
 import com.courtier.courtier.case_.entity.UserCase;
 import com.courtier.courtier.case_.repository.CaseRepository;
 import com.courtier.courtier.case_.repository.UserCaseRepository;
-import com.courtier.courtier.common.config.KafkaConfig;
+import com.courtier.courtier.common.cache.CacheCircuitBreaker;
 import com.courtier.courtier.common.exception.CourtierException;
+import com.courtier.courtier.outbox.service.OutboxService;
 import com.courtier.courtier.polling.CaseUpdatedEvent;
 import com.courtier.courtier.polling.DiffDetector;
 import com.courtier.courtier.scraper.ScraperRouter;
@@ -18,7 +19,6 @@ import com.courtier.courtier.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +40,9 @@ public class CaseService {
     private final UserRepository userRepository;
     private final ScraperRouter scraperRouter;
     private final DiffDetector diffDetector;
-    private final KafkaTemplate<String, CaseUpdatedEvent> kafkaTemplate;
     private final RedisTemplate<String, CaseResponse> caseRedisTemplate;
+    private final OutboxService outboxService;
+    private final CacheCircuitBreaker cacheCircuitBreaker;
 
     @Transactional
     public CaseResponse addCase(String userEmail, AddCaseRequest request) {
@@ -103,16 +104,6 @@ public class CaseService {
         return CaseResponse.from(courtCase, trackerCount);
     }
 
-//    public CaptchaResponse getCaptcha(String cnrNumber) {
-//        try {
-//            return scraperRouter.initSession(cnrNumber);
-//        } catch (CourtierException e) {
-//            throw e;
-//        } catch (Exception e) {
-//            throw new CourtierException.BadRequest(
-//                    "Failed to initialize session: " + e.getMessage());
-//        }
-//    }
 
     @Transactional(readOnly = true)
     public List<CaseResponse> getMyCases(String userEmail) {
@@ -144,24 +135,50 @@ public class CaseService {
         }
 
         // Try cache — fall back to DB if Redis is down
-        try {
-            String cacheKey = CASE_CACHE_PREFIX + cnrNumber;
-            CaseResponse cached = (CaseResponse) caseRedisTemplate.opsForValue().get(cacheKey);
-            if (cached != null) {
-//                log.debug("Case cache HIT: {}", cnrNumber);
-                return cached;
+        String cacheKey = CASE_CACHE_PREFIX + cnrNumber;
+
+        if (cacheCircuitBreaker.isRedisAvailable()) {
+
+            try {
+
+                CaseResponse cached =
+                        caseRedisTemplate.opsForValue().get(cacheKey);
+
+                if (cached != null) {
+                    return cached;
+                }
+
+            } catch (Exception e) {
+
+                cacheCircuitBreaker.markRedisDown();
+
+                log.warn("Redis unavailable. Circuit OPEN. Falling back to PostgreSQL.");
+
             }
-        } catch (Exception e) {
-            log.warn("Redis unavailable during case cache read, fetching from DB: {}", e.getMessage());
+
         }
 
         long trackerCount = userCaseRepository.countByCourtCaseIdAndActiveTrue(courtCase.getId());
         CaseResponse response = CaseResponse.from(courtCase, trackerCount);
 
-        try {
-            caseRedisTemplate.opsForValue().set(CASE_CACHE_PREFIX + cnrNumber, response, CASE_CACHE_TTL);
-        } catch (Exception e) {
-            log.warn("Redis unavailable during case cache write, continuing without cache: {}", e.getMessage());
+        if (cacheCircuitBreaker.isRedisAvailable()) {
+
+            try {
+
+                caseRedisTemplate.opsForValue().set(
+                        CASE_CACHE_PREFIX + cnrNumber,
+                        response,
+                        CASE_CACHE_TTL
+                );
+
+            } catch (Exception e) {
+
+                cacheCircuitBreaker.markRedisDown();
+
+                log.warn("Redis unavailable. Circuit OPEN.");
+
+            }
+
         }
 
         return response;
@@ -227,16 +244,36 @@ public class CaseService {
                 courtCase.getActs().add(act);
             }
 
-            caseRepository.save(courtCase);
+            courtCase = caseRepository.save(courtCase);
 
-            // Evict stale cache after update
-            caseRedisTemplate.delete(CASE_CACHE_PREFIX + cnrNumber);
+            if (cacheCircuitBreaker.isRedisAvailable()) {
+
+                try {
+
+                    caseRedisTemplate.delete(CASE_CACHE_PREFIX + cnrNumber);
+
+                } catch (Exception e) {
+
+                    cacheCircuitBreaker.markRedisDown();
+
+                    log.warn("Redis unavailable during cache eviction.");
+
+                }
+
+            }
 
             if (event != null) {
-                kafkaTemplate.send(KafkaConfig.CASE_UPDATED_TOPIC,
-                        courtCase.getCnrNumber(), event);
-                log.info("Manual Poll: Published CaseUpdatedEvent for CNR: {} changes: {}",
-                        courtCase.getCnrNumber(), event.changes());
+
+                outboxService.publishCaseUpdatedEvent(
+                        courtCase.getCnrNumber(),
+                        event
+                );
+
+                log.info(
+                        "Manual Poll: Outbox event created for CNR: {} changes: {}",
+                        courtCase.getCnrNumber(),
+                        event.changes()
+                );
             }
 
         } catch (CourtierException e) {

@@ -1,6 +1,7 @@
 package com.courtier.courtier.user.service;
 
 import com.courtier.courtier.case_.repository.UserCaseRepository;
+import com.courtier.courtier.common.cache.CacheCircuitBreaker;
 import com.courtier.courtier.common.exception.CourtierException;
 import com.courtier.courtier.notification.repository.NotificationRepository;
 import com.courtier.courtier.otp.repository.OtpTokenRepository;
@@ -28,6 +29,7 @@ public class UserService implements UserDetailsService {
     private final UserCaseRepository userCaseRepository;
     private final OtpTokenRepository otpTokenRepository;
     private final RedisTemplate<String, CachedUser> cachedUserRedisTemplate;
+    private final CacheCircuitBreaker cacheCircuitBreaker;
 
     private static final String USER_CACHE_PREFIX = "user:email:";
     private static final Duration USER_CACHE_TTL = Duration.ofMinutes(15);
@@ -37,28 +39,32 @@ public class UserService implements UserDetailsService {
         // Try cache first — but never let Redis failure break auth
         String cacheKey = USER_CACHE_PREFIX + email;
 
-        try {
-            CachedUser cached =
-                    cachedUserRedisTemplate.opsForValue().get(cacheKey);
-
-            if (cached != null) {
-//                log.debug("User cache HIT for: {}", email);
-
-                return User.builder()
-                        .id(cached.id())
-                        .email(cached.email())
-                        .password(cached.password())
-                        .fullName(cached.fullName())
-                        .role(User.Role.valueOf(cached.role()))
-                        .enabled(cached.enabled())
-                        .build();
-            }
-        } catch (Exception e) {
-            log.warn("Bad cache entry for {}, evicting", email, e);
+        if (cacheCircuitBreaker.isRedisAvailable()) {
 
             try {
-                cachedUserRedisTemplate.delete(cacheKey);
-            } catch (Exception ignored) {}
+
+                CachedUser cached =
+                        cachedUserRedisTemplate.opsForValue().get(cacheKey);
+
+                if (cached != null) {
+
+                    return User.builder()
+                            .id(cached.id())
+                            .email(cached.email())
+                            .password(cached.password())
+                            .fullName(cached.fullName())
+                            .role(User.Role.valueOf(cached.role()))
+                            .enabled(cached.enabled())
+                            .build();
+                }
+
+            } catch (Exception e) {
+
+                cacheCircuitBreaker.markRedisDown();
+
+                log.warn("Redis unavailable. Circuit OPEN. Falling back to PostgreSQL.");
+
+            }
 
         }
 
@@ -67,37 +73,56 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
         // Try to cache — but don't fail if Redis is down
-        try {
+        if (cacheCircuitBreaker.isRedisAvailable()) {
 
-            CachedUser cachedUser = new CachedUser(
-                    user.getId(),
-                    user.getEmail(),
-                    user.getPassword(),
-                    user.getFullName(),
-                    user.getRole().name(),
-                    user.isEnabled()
-            );
+            try {
 
-            cachedUserRedisTemplate.opsForValue().set(
-                    USER_CACHE_PREFIX + email,
-                    cachedUser,
-                    USER_CACHE_TTL
-            );
+                CachedUser cachedUser = new CachedUser(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getPassword(),
+                        user.getFullName(),
+                        user.getRole().name(),
+                        user.isEnabled()
+                );
 
-            log.debug("User cached: {}", email);
-        } catch (Exception e) {
-            log.warn("Redis unavailable during user cache write, continuing without cache: {}", e.getMessage());
+                cachedUserRedisTemplate.opsForValue().set(
+                        USER_CACHE_PREFIX + email,
+                        cachedUser,
+                        USER_CACHE_TTL
+                );
+
+            } catch (Exception e) {
+
+                cacheCircuitBreaker.markRedisDown();
+
+                log.warn("Redis unavailable. Circuit OPEN.");
+
+            }
+
         }
 
         return user;
     }
 
     public void evictUserCache(String email) {
-        try {
-            cachedUserRedisTemplate.delete(USER_CACHE_PREFIX + email);
-        } catch (Exception e) {
-            log.warn("Redis unavailable during cache eviction for {}: {}", email, e.getMessage());
+
+        if (!cacheCircuitBreaker.isRedisAvailable()) {
+            return;
         }
+
+        try {
+
+            cachedUserRedisTemplate.delete(USER_CACHE_PREFIX + email);
+
+        } catch (Exception e) {
+
+            cacheCircuitBreaker.markRedisDown();
+
+            log.warn("Redis unavailable. Circuit OPEN.");
+
+        }
+
     }
 
     @Transactional

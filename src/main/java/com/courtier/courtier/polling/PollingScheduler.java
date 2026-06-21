@@ -4,14 +4,14 @@ import com.courtier.courtier.case_.entity.Case;
 import com.courtier.courtier.case_.entity.HearingHistory;
 import com.courtier.courtier.case_.entity.CaseAct;
 import com.courtier.courtier.case_.repository.CaseRepository;
-import com.courtier.courtier.common.config.KafkaConfig;
+import com.courtier.courtier.outbox.service.OutboxService;
 import com.courtier.courtier.scraper.ScraperRouter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +24,7 @@ public class PollingScheduler {
     private final CaseRepository caseRepository;
     private final ScraperRouter scraperRouter;
     private final DiffDetector diffDetector;
-    private final KafkaTemplate<String, CaseUpdatedEvent> kafkaTemplate;
+    private final OutboxService outboxService;
 
     @Scheduled(cron = "0 0 0/6 * * *")
     @Transactional
@@ -87,8 +87,14 @@ public class PollingScheduler {
         caseRepository.save(courtCase);
 
         if (event != null) {
-            kafkaTemplate.send(KafkaConfig.CASE_UPDATED_TOPIC, courtCase.getCnrNumber(), event);
-            log.info("Kafka notification dispatch completed for CNR: {}", courtCase.getCnrNumber());
+
+            outboxService.publishCaseUpdatedEvent(
+                    courtCase.getCnrNumber(),
+                    event
+            );
+
+            log.info("Outbox event created for {}",
+                    courtCase.getCnrNumber());
         }
     }
 }

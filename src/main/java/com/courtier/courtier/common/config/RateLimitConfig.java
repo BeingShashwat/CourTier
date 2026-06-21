@@ -40,7 +40,7 @@ public class RateLimitConfig {
     // POST /api/auth/login — 10 per 15 minutes per IP
     public static BucketConfiguration loginConfig() {
         return BucketConfiguration.builder()
-                .addLimit(builder().capacity(15)
+                .addLimit(builder().capacity(20)
                         .refillIntervally(15, Duration.ofMinutes(15))
                         .build())
                 .build();

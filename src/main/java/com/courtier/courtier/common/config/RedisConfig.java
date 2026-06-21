@@ -12,12 +12,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisURI;
+
+import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
@@ -77,7 +80,26 @@ public class RedisConfig {
     // Raw byte[] connection for Bucket4j — separate from Spring's managed connection
     @Bean
     public StatefulRedisConnection<String, byte[]> lettuceConnection() {
-        RedisClient client = RedisClient.create("redis://" + redisHost + ":" + redisPort);
-        return client.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
+
+        RedisURI redisUri = RedisURI.builder()
+                .withHost(redisHost)
+                .withPort(redisPort)
+                .withTimeout(Duration.ofMillis(500))
+                .build();
+
+        RedisClient client = RedisClient.create(redisUri);
+
+        client.setOptions(
+                ClientOptions.builder()
+                        .autoReconnect(false)
+                        .build()
+        );
+
+        return client.connect(
+                RedisCodec.of(
+                        StringCodec.UTF8,
+                        ByteArrayCodec.INSTANCE
+                )
+        );
     }
 }
