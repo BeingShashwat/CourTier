@@ -27,6 +27,7 @@ public class EcourtsDistrictScraper implements CourtScraper {
 
     private final CaseHtmlParser htmlParser;
     private final ObjectMapper objectMapper;
+
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15))
             .build();
@@ -45,12 +46,7 @@ public class EcourtsDistrictScraper implements CourtScraper {
     @Override
     public Case scrape(String cnrNumber) throws Exception {
 
-        log.info(
-                "Executing stateless searchByCNR scrape for CNR: {}",
-                cnrNumber
-        );
-
-
+        log.info("Scraping district case: {}", cnrNumber);
 
         String body =
                 "cino=" + cnrNumber +
@@ -58,59 +54,94 @@ public class EcourtsDistrictScraper implements CourtScraper {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(SEARCH_URL))
-                .header(
-                        "Content-Type",
-                        "application/x-www-form-urlencoded; charset=UTF-8"
-                )
+                .timeout(Duration.ofSeconds(30))
+                .header("User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0.0.0 Safari/537.36")
+                .header("Accept", "*/*")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Origin", "https://services.ecourts.gov.in")
+                .header("Referer",
+                        "https://services.ecourts.gov.in/ecourtindia_v6/")
+                .header("Content-Type",
+                        "application/x-www-form-urlencoded; charset=UTF-8")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        HttpResponse<String> response =
-                this.client.send(
-                        request,
-                        HttpResponse.BodyHandlers.ofString()
-                );
+        HttpResponse<String> response;
+
+        try {
+
+            response = client.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+        } catch (Exception e) {
+
+            log.error("District scraper request failed for {}", cnrNumber, e);
+
+            throw e;
+        }
 
         if (response.statusCode() != 200) {
+
             log.error(
-                    "eCourts returned HTTP {} for {}",
+                    "District court returned HTTP {} for CNR {}",
                     response.statusCode(),
                     cnrNumber
             );
+
             return null;
         }
 
         if (response.body() == null || response.body().isBlank()) {
+
             log.error(
-                    "Empty response received for {}",
+                    "Empty response received for district case {}",
                     cnrNumber
             );
+
             return null;
         }
 
-        log.error("Raw JSON response: {}", response.body());
+        JsonNode json;
 
-        JsonNode json = objectMapper.readTree(response.body());
+        try {
+
+            json = objectMapper.readTree(response.body());
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to parse eCourts JSON for {}",
+                    cnrNumber,
+                    e
+            );
+
+            throw e;
+        }
 
         JsonNode caseTypeNode = json.get("casetype_list");
 
         if (caseTypeNode == null) {
+
             log.error(
-                    "casetype_list missing in response for {}",
+                    "casetype_list missing for district case {}",
                     cnrNumber
             );
+
             return null;
         }
 
         String html = caseTypeNode.asText();
 
-        log.info("HTML length = {}", html.length());
+        if (html.isBlank()) {
 
-        if (html == null || html.isBlank()) {
             log.warn(
-                    "Blank casetype_list returned for {}",
+                    "Blank HTML returned for district case {}",
                     cnrNumber
             );
+
             return null;
         }
 
@@ -118,28 +149,42 @@ public class EcourtsDistrictScraper implements CourtScraper {
                 || html.contains("Record not found")
                 || html.contains("No Record")) {
 
-            log.warn(
-                    "Case not found for CNR {}",
-                    cnrNumber
-            );
+            log.warn("District case not found: {}", cnrNumber);
 
             return null;
         }
 
-        Case courtCase = htmlParser.parse(html, cnrNumber);
+        Case courtCase;
+
+        try {
+
+            courtCase = htmlParser.parse(html, cnrNumber);
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to parse district court HTML for {}",
+                    cnrNumber,
+                    e
+            );
+
+            throw e;
+        }
 
         if (courtCase == null) {
+
             log.warn(
-                    "Parser returned null for {}",
+                    "HTML parser returned null for district case {}",
                     cnrNumber
             );
+
             return null;
         }
 
         courtCase.setLastPolledAt(LocalDateTime.now());
 
         log.info(
-                "Successfully scraped CNR {} using searchByCNR",
+                "Successfully scraped district case {}",
                 cnrNumber
         );
 

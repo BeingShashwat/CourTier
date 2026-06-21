@@ -8,6 +8,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.mail.MailException;
 
 @Component
 @RequiredArgsConstructor
@@ -29,12 +30,22 @@ public class SmtpEmailSender implements EmailSenderStrategy {
             helper.setReplyTo("ershashwat@gmail.com");
 
             String html = buildHtml(subject, body);
-            helper.setText(body, html); // plain-text fallback, then HTML
+            helper.setText(body, html);
+
             mailSender.send(message);
+
             log.info("Email sent via SMTP to: {}", to);
-        } catch (MessagingException e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Email send failed", e);
+
+        } catch (MessagingException | MailException e) {
+            log.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+
+            // Don't rethrow.
+            // Email is best-effort and runs asynchronously.
+            // The notification is already persisted in the database.
+        } catch (Exception e) {
+            log.error("Unexpected error while sending email to {}.", to, e);
+
+            // Don't rethrow.
         }
     }
 
