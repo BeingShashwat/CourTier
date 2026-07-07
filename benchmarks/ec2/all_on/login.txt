@@ -1,0 +1,65 @@
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 13.233.118.69 (be patient).....done
+
+
+Server Software:        nginx/1.24.0
+Server Hostname:        13.233.118.69
+Server Port:            80
+
+Document Path:          /api/auth/login
+Document Length:        Variable
+
+Concurrency Level:      1
+Time taken for tests:   6.765 seconds
+Complete requests:      15
+Failed requests:        0
+Total transferred:      13590 bytes
+Total body sent:        3210
+HTML transferred:       7665 bytes
+Requests per second:    2.22 [#/sec] (mean)
+Time per request:       451.008 [ms] (mean)
+Time per request:       451.008 [ms] (mean, across all concurrent requests)
+Transfer rate:          1.96 [Kbytes/sec] received
+                        0.46 kb/s sent
+                        2.43 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       54  152 312.2     74    1280
+Processing:   143  299 522.6    166    2187
+Waiting:      143  298 522.7    164    2187
+Total:        197  451 834.7    237    3468
+
+Percentage of the requests served within a certain time (ms)
+  50%    234
+  66%    243
+  75%    248
+  80%    258
+  90%    270
+  95%   3468
+  98%   3468
+  99%   3468
+ 100%   3468 (longest request)
+
+
+| Metric          |                  Value |
+| --------------- | ---------------------: |
+| Endpoint        | `POST /api/auth/login` |
+| Environment     |        EC2 (Public IP) |
+| Redis           |                     ON |
+| Kafka           |                     ON |
+| Circuit Breaker |                     ON |
+| Outbox          |                     ON |
+| Requests        |                     15 |
+| Concurrency     |                      1 |
+| Mean latency    |          **451.01 ms** |
+| Median (P50)    |             **234 ms** |
+| P90             |             **270 ms** |
+| P95             |            **3468 ms** |
+| P99             |            **3468 ms** |
+| Max             |            **3468 ms** |
+| Throughput      |         **2.22 req/s** |
+| Errors          |                  **0** |

@@ -1,0 +1,27 @@
+===== UPST010085582024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 0.883 total
+===== UPST010078642024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 0.660 total
+===== UPST010036042024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 0.658 total
+===== UPST010068732024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 0.912 total
+===== BRWC020047962024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 0.619 total
+
+
+| Metric          |              Value |
+| --------------- | -----------------: |
+| Endpoint        |  `POST /api/cases` |
+| Scenario        | Cold Add (new CNR) |
+| Environment     |          Localhost |
+| Configuration   |         **All ON** |
+| Redis           |                 ON |
+| Kafka           |                 ON |
+| Circuit Breaker |                 ON |
+| Outbox          |                 ON |
+| Samples         |                  5 |
+| Average         |        **0.746 s** |
+| Minimum         |        **0.619 s** |
+| Maximum         |        **0.912 s** |
+| Range           |        **0.293 s** |

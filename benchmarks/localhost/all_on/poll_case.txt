@@ -1,0 +1,47 @@
+Run 1
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 2.092 total
+Run 2
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.674 total
+Run 3
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.741 total
+Run 4
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.623 total
+Run 5
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.649 total
+Run 6
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.623 total
+Run 7
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.762 total
+Run 8
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.799 total
+Run 9
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.796 total
+Run 10
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.808 total
+
+
+| Metric          |                        Value |
+| --------------- | ---------------------------: |
+| Endpoint        | `POST /api/cases/{cnr}/poll` |
+| Environment     |                    Localhost |
+| Configuration   |                   **All ON** |
+| Redis           |                           ON |
+| Kafka           |                           ON |
+| Circuit Breaker |                           ON |
+| Outbox          |                           ON |
+| Samples         |                           10 |
+| Average         |                  **0.857 s** |
+| Minimum         |                  **0.623 s** |
+| Maximum         |                  **2.092 s** |
+| Range           |                  **1.469 s** |
+
+
+Warm Runs (Runs 2–10)
+
+These are often more representative of steady-state performance:
+
+Metric	Value
+Samples	9
+Average	0.719 s
+Minimum	0.623 s
+Maximum	0.808 s

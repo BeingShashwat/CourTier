@@ -1,0 +1,37 @@
+| Endpoint                        |    Localhost | EC2 (Public IP) |
+| ------------------------------- | -----------: | --------------: |
+| POST `/api/auth/login`          | **89.67 ms** |   **231.89 ms** |
+| POST `/api/auth/refresh`        |  **6.97 ms** |   **169.53 ms** |
+| GET `/api/cases`                | **10.50 ms** |   **158.41 ms** |
+| GET `/api/cases/{cnr}`          |  **5.63 ms** |   **157.92 ms** |
+| POST `/api/cases` (Cold Scrape) |  **0.969 s** |     **1.000 s** |
+| POST `/api/cases/{cnr}/poll`    |  **0.729 s** |     **0.786 s** |
+| DELETE `/api/cases/{cnr}`       |    **24 ms** |      **178 ms** |
+
+
+
+
+
+LOCALHOST:
+| Endpoint                 |     Average |
+| ------------------------ | ----------: |
+| Login                    | **89.7 ms** |
+| Refresh Token            |  **7.0 ms** |
+| Get My Cases             | **10.5 ms** |
+| Get Case                 |  **5.6 ms** |
+| Add Existing Case (Cold) |  **969 ms** |
+| Manual Poll              |  **729 ms** |
+| Delete Case              |   **24 ms** |
+
+
+
+EC2:
+| Endpoint                 |      Average |
+| ------------------------ | -----------: |
+| Login                    | **231.9 ms** |
+| Refresh Token            | **169.5 ms** |
+| Get My Cases             | **158.4 ms** |
+| Get Case                 | **157.9 ms** |
+| Add Existing Case (Cold) |  **1.000 s** |
+| Manual Poll              |   **786 ms** |
+| Delete Case              |   **178 ms** |

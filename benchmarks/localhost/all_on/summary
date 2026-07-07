@@ -1,0 +1,9 @@
+| Endpoint                     |                       Mean Latency | Notes                                             |
+| ---------------------------- | ---------------------------------: | ------------------------------------------------- |
+| POST `/api/auth/login`       |                       **89.67 ms** | BCrypt password verification + JWT generation     |
+| POST `/api/auth/refresh`     |                        **6.97 ms** | JWT refresh                                       |
+| GET `/api/cases`             |                       **10.50 ms** | Returns all tracked cases (~10 KB payload)        |
+| GET `/api/cases/{cnr}`       |                        **5.63 ms** | Redis-backed cached lookup                        |
+| POST `/api/cases`            |                         **746 ms** | Cold scrape + parse + PostgreSQL + Redis + Outbox |
+| POST `/api/cases/{cnr}/poll` | **857 ms** *(719 ms steady-state)* | Manual scrape and update                          |
+| DELETE `/api/cases/{cnr}`    |                          **24 ms** | Remove tracked case                               |
