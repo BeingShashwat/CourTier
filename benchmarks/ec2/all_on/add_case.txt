@@ -1,0 +1,27 @@
+===== UPST010079192024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 1.439 total
+===== UPST010085582024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.01s system 0% cpu 1.122 total
+===== UPST010078642024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.01s system 1% cpu 0.810 total
+===== UPST010036042024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.01s system 1% cpu 0.938 total
+===== UPST010068732024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.01s user 0.01s system 1% cpu 0.970 total
+===== BRWC020047962024 =====
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H  -d   > /dev/null  0.00s user 0.00s system 0% cpu 0.718 total
+
+
+| Metric          |             Value |
+| --------------- | ----------------: |
+| Endpoint        | `POST /api/cases` |
+| Environment     |   EC2 (Public IP) |
+| Redis           |                ON |
+| Kafka           |                ON |
+| Circuit Breaker |                ON |
+| Outbox          |                ON |
+| Samples         |                 6 |
+| Average         |       **1.000 s** |
+| Minimum         |       **0.718 s** |
+| Maximum         |       **1.439 s** |
+| Range           |       **0.721 s** |

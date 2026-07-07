@@ -1,12 +1,10 @@
-package com.courtier.courtier.notification;
+package com.courtier.courtier.notification.dispatcher;
 
-import com.courtier.courtier.common.config.KafkaConfig;
 import com.courtier.courtier.notification.service.NotificationService;
 import com.courtier.courtier.polling.CaseUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,20 +12,19 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @ConditionalOnProperty(
         name = "courtier.kafka.enabled",
-        havingValue = "true",
-        matchIfMissing = true
+        havingValue = "false"
 )
-public class NotificationConsumer {
+public class DirectNotificationDispatcher implements NotificationDispatcher {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(
-            topics = KafkaConfig.CASE_UPDATED_TOPIC,
-            groupId = "courtier-notifications"
-    )
-    public void consume(CaseUpdatedEvent event) {
+    @Override
+    public void dispatch(CaseUpdatedEvent event) {
 
-        log.info("Received Kafka event for {}", event.cnrNumber());
+        log.info(
+                "Kafka disabled. Processing notification directly for CNR {}",
+                event.cnrNumber()
+        );
 
         notificationService.process(event);
 

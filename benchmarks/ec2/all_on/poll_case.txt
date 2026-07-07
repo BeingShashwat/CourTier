@@ -1,0 +1,35 @@
+Run 1
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.00s system 0% cpu 0.883 total
+Run 2
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.672 total
+Run 3
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.866 total
+Run 4
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.808 total
+Run 5
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.01s user 0.01s system 1% cpu 0.789 total
+Run 6
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.802 total
+Run 7
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.708 total
+Run 8
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.740 total
+Run 9
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.705 total
+Run 10
+curl -s -X POST -H "Authorization: Bearer $TOKEN"  > /dev/null  0.00s user 0.01s system 1% cpu 0.888 total
+
+
+| Metric          |                        Value |
+| --------------- | ---------------------------: |
+| Endpoint        | `POST /api/cases/{cnr}/poll` |
+| Environment     |              EC2 (Public IP) |
+| Redis           |                           ON |
+| Kafka           |                           ON |
+| Circuit Breaker |                           ON |
+| Outbox          |                           ON |
+| Samples         |                           10 |
+| Average         |                  **0.786 s** |
+| Minimum         |                  **0.672 s** |
+| Maximum         |                  **0.888 s** |
+| Range           |                  **0.216 s** |
