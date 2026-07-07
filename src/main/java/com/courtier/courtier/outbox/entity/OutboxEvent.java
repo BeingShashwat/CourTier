@@ -24,7 +24,7 @@ public class OutboxEvent {
     @Column(nullable = false)
     private String aggregateKey;
 
-    @Column(nullable = false, columnDefinition = "jsonb")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
     @Builder.Default

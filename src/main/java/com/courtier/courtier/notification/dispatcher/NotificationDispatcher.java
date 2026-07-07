@@ -1,4 +1,9 @@
 package com.courtier.courtier.notification.dispatcher;
 
-public class NotificationDispatcher {
+import com.courtier.courtier.polling.CaseUpdatedEvent;
+
+public interface NotificationDispatcher {
+
+    void dispatch(CaseUpdatedEvent event) throws Exception;
+
 }

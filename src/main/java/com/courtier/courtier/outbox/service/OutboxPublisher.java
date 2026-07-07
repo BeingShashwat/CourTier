@@ -1,15 +1,14 @@
 package com.courtier.courtier.outbox.service;
 
-import com.courtier.courtier.common.config.KafkaConfig;
 import com.courtier.courtier.outbox.entity.OutboxEvent;
 import com.courtier.courtier.outbox.repository.OutboxRepository;
 import com.courtier.courtier.polling.CaseUpdatedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import com.courtier.courtier.notification.dispatcher.NotificationDispatcher;
 
 import java.util.List;
 
@@ -19,8 +18,8 @@ import java.util.List;
 public class OutboxPublisher {
 
     private final OutboxRepository outboxRepository;
-    private final KafkaTemplate<String, CaseUpdatedEvent> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Scheduled(fixedDelay = 5000)
     public void publishPendingEvents() {
@@ -38,20 +37,19 @@ public class OutboxPublisher {
                                 CaseUpdatedEvent.class
                         );
 
-                kafkaTemplate.send(
-                        KafkaConfig.CASE_UPDATED_TOPIC,
-                        event.getAggregateKey(),
-                        payload
-                ).get();
+                notificationDispatcher.dispatch(payload);
 
                 outboxRepository.delete(event);
 
-                log.info("Published Outbox Event {}", event.getId());
+                log.info(
+                        "Processed Outbox Event {}",
+                        event.getId()
+                );
 
             } catch (Exception e) {
 
                 log.error(
-                        "Failed to publish Outbox Event {}: {}",
+                        "Failed to process Outbox Event {}: {}",
                         event.getId(),
                         e.getMessage()
                 );
