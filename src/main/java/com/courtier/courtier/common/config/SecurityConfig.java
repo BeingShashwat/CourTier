@@ -83,8 +83,10 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
-                "https://courtier-shashwat.netlify.app"));
-
+                "https://courtier.page",
+                "https://www.courtier.page",
+                "https://courtier-shashwat.netlify.app"
+        ));
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
